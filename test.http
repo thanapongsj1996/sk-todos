@@ -1,0 +1,24 @@
+### GET PING
+GET {{base_url}}/ping
+Content-Type: application/json
+
+> {%
+client.test("Request executed successfully", function() {
+  client.assert(response.status === 200, "Response status is not 200");
+});
+client.test("Message option exists", function() {
+  client.assert(response.body.hasOwnProperty("message"), "Cannot find 'message' option in response");
+});
+client.test("Message should be pong", function() {
+  client.assert(response.body.message === "pong", "failed want pong but got " + response.body.message);
+});
+%}
+
+### POST
+POST {{base_url}}/todos
+Content-Type: application/json
+
+{
+  "title": "do homework 3"
+}
+
