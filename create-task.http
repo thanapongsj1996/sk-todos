@@ -1,0 +1,14 @@
+### Get token and save
+GET http://{{base_url}}/tokenz
+Content-Type: application/json
+
+> {% client.global.set("auth_token", response.body.token); %}
+
+### POST create a task
+POST {{base_url}}/todos
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "title": "do homework 3"
+}

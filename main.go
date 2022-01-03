@@ -5,6 +5,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"net/http"
+	"sk-todos/auth"
 	"sk-todos/todo"
 )
 
@@ -23,8 +24,11 @@ func main() {
 		})
 	})
 
+	r.GET("/tokenz", auth.AccessToken("==signature=="))
+	protected := r.Group("", auth.Protect([]byte("==signature==")))
+
 	todoHandler := todo.NewTodoHandler(db)
-	r.POST("/todos", todoHandler.NewTask)
+	protected.POST("/todos", todoHandler.NewTask)
 
 	r.Run()
 }
