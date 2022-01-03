@@ -16,7 +16,7 @@ func Protect(signature []byte) gin.HandlerFunc {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
-			return []byte("==signature=="), nil
+			return []byte(signature), nil
 		})
 
 		if err != nil {

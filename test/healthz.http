@@ -13,19 +13,3 @@ client.test("Message should be pong", function() {
   client.assert(response.body.message === "pong", "failed want pong but got " + response.body.message);
 });
 %}
-
-### Get token and save
-GET http://localhost:8080/tokenz
-Content-Type: application/json
-
-> {% client.global.set("auth_token", response.body.json.token); %}
-
-### POST create a task
-POST {{base_url}}/todos
-Content-Type: application/json
-Authorization: Bearer {{auth_token}}
-
-{
-  "title": "do homework 3"
-}
-
