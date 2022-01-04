@@ -1,0 +1,2 @@
+### Load test
+GET {{base_url}}/load-test

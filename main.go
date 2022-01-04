@@ -15,7 +15,21 @@ import (
 	"sk-todos/todo"
 	"syscall"
 	"time"
+
+	"golang.org/x/time/rate"
 )
+
+var limiter = rate.NewLimiter(100, 1)
+
+func limitedHandler(c *gin.Context) {
+	if !limiter.Allow() {
+		c.AbortWithStatus(http.StatusTooManyRequests)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+	})
+}
 
 var (
 	buildcommit = "dev"
@@ -52,6 +66,10 @@ func main() {
 		c.Status(http.StatusOK)
 	})
 
+	// Load test
+	r.GET("/load-test", limitedHandler)
+
+	// lgflags
 	r.GET("/x", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"buildcommit": buildcommit,
@@ -99,6 +117,4 @@ func main() {
 	if err := s.Shutdown(timeoutCtx); err != nil {
 		fmt.Println(err)
 	}
-
-	r.Run()
 }
