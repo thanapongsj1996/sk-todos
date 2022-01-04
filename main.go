@@ -23,11 +23,20 @@ var (
 )
 
 func main() {
-	err := godotenv.Load("local.env")
+	// Liveness Probe -> Create file then kube I check that there's that file or not
+	_, err := os.Create("/tmp/live")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer os.Remove("tmp/live")
+
+	// ENV
+	err = godotenv.Load("local.env")
 	if err != nil {
 		log.Printf("please consider environment variables: %s \n", err.Error())
 	}
 
+	// Database
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
@@ -35,7 +44,14 @@ func main() {
 
 	db.AutoMigrate(&todo.Todo{})
 
+	// Routes
 	r := gin.Default()
+
+	// Readiness Probe
+	r.GET("/healthz", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
 	r.GET("/x", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"buildcommit": buildcommit,

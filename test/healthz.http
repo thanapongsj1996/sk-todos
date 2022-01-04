@@ -13,3 +13,6 @@ client.test("Message should be pong", function() {
   client.assert(response.body.message === "pong", "failed want pong but got " + response.body.message);
 });
 %}
+
+### Healthz
+GET {{base_url}}/healthz
