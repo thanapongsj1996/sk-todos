@@ -5,11 +5,12 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Todo struct {
 	gorm.Model
-	Title string `json:"title" binding:"required"`
+	Title string `json:"Text" binding:"required"`
 }
 
 // TableName กำหนดชื่อ table ด้วยตัวเอง
@@ -55,4 +56,39 @@ func (t *TodoHandler) NewTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"ID": todo.Model.ID,
 	})
+}
+
+func (t *TodoHandler) List(c *gin.Context) {
+	var todos []Todo
+	r := t.db.Find(&todos)
+	if err := r.Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, todos)
+}
+
+func (t *TodoHandler) Delete(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	r := t.db.Delete(&Todo{}, id)
+	if err := r.Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusOK)
+
 }

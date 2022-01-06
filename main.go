@@ -101,6 +101,8 @@ func main() {
 
 	todoHandler := todo.NewTodoHandler(db)
 	protected.POST("/todos", todoHandler.NewTask)
+	protected.GET("/todos", todoHandler.List)
+	protected.DELETE("/todos/:id", todoHandler.Delete)
 
 	// Graceful Shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
