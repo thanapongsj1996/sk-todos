@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -60,6 +61,18 @@ func main() {
 
 	// Routes
 	r := gin.Default()
+
+	// Cors
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{
+		"http://localhost:8080",
+	}
+	config.AllowHeaders = []string{
+		"Origin",
+		"Authorization",
+		"TransactionID",
+	}
+	r.Use(cors.New(config))
 
 	// Readiness Probe
 	r.GET("/healthz", func(c *gin.Context) {
