@@ -99,10 +99,12 @@ func main() {
 	r.GET("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
 	protected := r.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
-	todoHandler := todo.NewTodoHandler(db)
-	protected.POST("/todos", todoHandler.NewTask)
-	protected.GET("/todos", todoHandler.List)
-	protected.DELETE("/todos/:id", todoHandler.Delete)
+	gormStore := todo.NewGormStore(db)
+	todoHandler := todo.NewTodoHandler(gormStore)
+
+	protected.POST("/todos", todo.NewGinHandler(todoHandler.NewTask))
+	//protected.GET("/todos", todoHandler.List)
+	//protected.DELETE("/todos/:id", todoHandler.Delete)
 
 	// Graceful Shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
