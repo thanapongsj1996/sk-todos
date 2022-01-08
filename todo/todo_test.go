@@ -1,30 +1,44 @@
 package todo
 
 import (
-	"bytes"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
 func TestNewTodoSleep(t *testing.T) {
-	handler := NewTodoHandler(&gorm.DB{})
-
-	w := httptest.NewRecorder()
-	payload := bytes.NewBufferString(`{"text":"sleep"}`)
-	req, _ := http.NewRequest("POST", "http://127.0.0.1:8080/todos", payload)
-	req.Header.Add("TransactionID", "testIDxxx")
-
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	handler := NewTodoHandler(&TestDB{})
+	c := &TextContext{}
 
 	handler.NewTask(c)
 
-	want := `{"error":"not allowed"}`
+	want := "not allowed"
 
-	if want != w.Body.String() {
-		t.Errorf("want %s but get %s", want, w.Body.String())
+	if want != c.v["error"] {
+		t.Errorf("want %s but get %s", want, c.v["error"])
 	}
+}
+
+type TestDB struct{}
+
+func (TestDB) New(*Todo) error {
+	return nil
+}
+
+type TextContext struct {
+	v map[string]interface{}
+}
+
+func (TextContext) Bind(v interface{}) error {
+	*v.(*Todo) = Todo{
+		Title: "sleep",
+	}
+	return nil
+}
+func (c *TextContext) JSON(code int, v interface{}) {
+	c.v = v.(map[string]interface{})
+}
+func (TextContext) TransactionID() string {
+	return "TransactionID"
+}
+func (TextContext) Audience() string {
+	return "Unit test"
 }

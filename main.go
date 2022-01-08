@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -13,6 +12,8 @@ import (
 	"os"
 	"os/signal"
 	"sk-todos/auth"
+	"sk-todos/router"
+	"sk-todos/store"
 	"sk-todos/todo"
 	"syscall"
 	"time"
@@ -59,20 +60,7 @@ func main() {
 
 	db.AutoMigrate(&todo.Todo{})
 
-	// Routes
-	r := gin.Default()
-
-	// Cors
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{
-		"http://localhost:8080",
-	}
-	config.AllowHeaders = []string{
-		"Origin",
-		"Authorization",
-		"TransactionID",
-	}
-	r.Use(cors.New(config))
+	r := router.NewMyRouter()
 
 	// Readiness Probe
 	r.GET("/healthz", func(c *gin.Context) {
@@ -97,12 +85,13 @@ func main() {
 	})
 
 	r.GET("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
-	protected := r.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
+	//protected := r.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
-	gormStore := todo.NewGormStore(db)
+	gormStore := store.NewGormStore(db)
 	todoHandler := todo.NewTodoHandler(gormStore)
 
-	protected.POST("/todos", todo.NewGinHandler(todoHandler.NewTask))
+	r.POST("/todos", todoHandler.NewTask)
+	//protected.POST("/todos", router.NewGinHandler(todoHandler.NewTask))
 	//protected.GET("/todos", todoHandler.List)
 	//protected.DELETE("/todos/:id", todoHandler.Delete)
 
