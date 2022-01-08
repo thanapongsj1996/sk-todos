@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -10,12 +9,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"sk-todos/auth"
 	"sk-todos/router"
 	"sk-todos/store"
 	"sk-todos/todo"
-	"syscall"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -69,31 +65,32 @@ func main() {
 	}
 	collection := client.Database("myapp-mongo").Collection("todos")
 
-	r := router.NewMyRouter()
+	//r := router.NewMyRouter()
+	r := router.NewFiberRouter()
 
-	// Readiness Probe
-	r.GET("/healthz", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-
-	// Load test
-	r.GET("/load-test", limitedHandler)
-
-	// lgflags
-	r.GET("/x", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"buildcommit": buildcommit,
-			"buildtime":   buildtime,
-		})
-	})
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	r.GET("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
+	//// Readiness Probe
+	//r.GET("/healthz", func(c *gin.Context) {
+	//	c.Status(http.StatusOK)
+	//})
+	//
+	//// Load test
+	//r.GET("/load-test", limitedHandler)
+	//
+	//// lgflags
+	//r.GET("/x", func(c *gin.Context) {
+	//	c.JSON(http.StatusOK, gin.H{
+	//		"buildcommit": buildcommit,
+	//		"buildtime":   buildtime,
+	//	})
+	//})
+	//
+	//r.GET("/ping", func(c *gin.Context) {
+	//	c.JSON(http.StatusOK, gin.H{
+	//		"message": "pong",
+	//	})
+	//})
+	//
+	//r.GET("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
 	//protected := r.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
 	//gormStore := store.NewGormStore(db)
@@ -108,31 +105,36 @@ func main() {
 	//protected.DELETE("/todos/:id", todoHandler.Delete)
 
 	// Graceful Shutdown
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	//ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	//defer stop()
 
-	s := &http.Server{
-		Addr:           ":" + os.Getenv("PORT"),
-		Handler:        r,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+	//s := &http.Server{
+	//	Addr:           ":" + os.Getenv("PORT"),
+	//	Handler:        r,
+	//	ReadTimeout:    10 * time.Second,
+	//	WriteTimeout:   10 * time.Second,
+	//	MaxHeaderBytes: 1 << 20,
+	//}
+
+	//go func() {
+	//	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	//		log.Fatalf("listen: %s\n", err.Error())
+	//	}
+	//}()
+	//
+	//<-ctx.Done()
+	//stop()
+	//fmt.Println("shutting down gracefully, press Ctrl+C again to force")
+	//
+	//timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	//defer cancel()
+	//
+	//if err := s.Shutdown(timeoutCtx); err != nil {
+	//	fmt.Println(err)
+	//}
+
+	if err := r.Listen(":" + os.Getenv("PORT")); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err.Error())
 	}
 
-	go func() {
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err.Error())
-		}
-	}()
-
-	<-ctx.Done()
-	stop()
-	fmt.Println("shutting down gracefully, press Ctrl+C again to force")
-
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.Shutdown(timeoutCtx); err != nil {
-		fmt.Println(err)
-	}
 }
