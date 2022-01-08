@@ -18,6 +18,8 @@ import (
 	"syscall"
 	"time"
 
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/time/rate"
 )
 
@@ -60,6 +62,13 @@ func main() {
 
 	db.AutoMigrate(&todo.Todo{})
 
+	// Mongo
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://mongoadmin:secret@localhost:27017"))
+	if err != nil {
+		panic("fail to connect mongodb")
+	}
+	collection := client.Database("myapp-mongo").Collection("todos")
+
 	r := router.NewMyRouter()
 
 	// Readiness Probe
@@ -87,8 +96,11 @@ func main() {
 	r.GET("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
 	//protected := r.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
-	gormStore := store.NewGormStore(db)
-	todoHandler := todo.NewTodoHandler(gormStore)
+	//gormStore := store.NewGormStore(db)
+	//todoHandler := todo.NewTodoHandler(gormStore)
+
+	mongoStore := store.NewMongoDBStore(collection)
+	todoHandler := todo.NewTodoHandler(mongoStore)
 
 	r.POST("/todos", todoHandler.NewTask)
 	//protected.POST("/todos", router.NewGinHandler(todoHandler.NewTask))
